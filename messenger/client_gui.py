@@ -131,7 +131,7 @@ class Client:
             chat_item = QtGui.QStandardItem(QtGui.QIcon(icon), '*')
             chat_item.setData(room, role=33)
             self.chat_model.appendRow(chat_item)
-            self.db.add_contact(0, room, room)
+            self.db.add_contact(room, room)
             self.sckt.send(JIMGetUsers(self.user_name, room).packing())
         elif dialog == 65536:
             print('No')
@@ -145,7 +145,7 @@ class Client:
         print('after resp')
         if resp == 'ADDED':
             id = self.added_queue.get()
-            self.db.add_contact(id, contact, contact)
+            self.db.add_contact(contact, contact, id)
             self.model_add(contact)
         elif resp == 'NOPE!':
             pass
@@ -206,7 +206,7 @@ class Client:
             for _ in range(msg.quantity):
                 msg = self.sckt.recv(MESSAGE_SIZE)
                 msg = JIM.unpacking(msg)
-                self.db.add_contact(msg.user_id, msg.user_name, msg.user_nickname)
+                self.db.add_contact(msg.user_name, msg.user_nickname, msg.user_id)
         else:
             self.show(msg)
 
@@ -226,7 +226,9 @@ class Client:
             icon = 'chat.png'
             chat_item = QtGui.QStandardItem(QtGui.QIcon(icon), '*')
             chat_item.setData(chat_name, role=33)
-            self.db.add_contact(0, chat_name, chat_name)
+            print(1)
+            self.db.add_contact(chat_name, chat_name)
+            print(2)
             self.chat_model.appendRow(chat_item)
             self.sckt.send(JIMInviteChat(self.user_name, self.contact, chat_name).packing())
 
@@ -453,6 +455,7 @@ class Client:
         # resp = self.queue.get()
         # if resp == 'OK':
         self.db.start()
+        self.db.clear_chats()
         #     self.get_contacts()
         self.get_contacts()
         # self.queue.put(JIMResponse(OK))
@@ -626,4 +629,10 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
     client = Client('localhost', 7777)
     client.go()
+    name = client.user_name
+    print(name)
     sys.exit(app.exec_())
+    # db = ClientDB(name)
+    # db.start()
+    # db.clear_chats()
+    # db.stop()
