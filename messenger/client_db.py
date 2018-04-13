@@ -20,10 +20,13 @@ class ClientDB:
             name = Column(String, unique=True)
             nick = Column(String)
 
-            def __init__(self, id, name, nick):
-                self.id = id
-                self.name = name
-                self.nick = nick
+            def __init__(self, *args):
+                self.name = args[0]
+                self.nick = args[1]
+                try:
+                    self.id = args[2]
+                except:
+                    pass
 
         self.Contact = Contact
 
@@ -57,17 +60,27 @@ class ClientDB:
         #         self.time = time
         #         self.receiver = receiver
 
-    def add_contact(self, id, name, nick):
-        self.session.add(self.Contact(id, name, nick))
+    def add_contact(self, *args):
+        self.session.add(self.Contact(*args))
         try:
             self.session.commit()
         except IntegrityError:
             self.session.rollback()
 
+
+
+
     def del_contact(self, name):
         contact_id = self.select_user_id(name)
         contact = self.session.query(self.Contact).filter(self.Contact.id == contact_id).one()
         self.session.delete(contact)
+        self.session.commit()
+
+    def clear_chats(self):
+        chats = self.session.query(self.Contact).filter(self.Contact.name.startswith('<server_chat.Chat object at')).all()
+        for chat in chats:
+            self.del_messages(chat.name)
+            self.del_contact(chat.name)
         self.session.commit()
 
     def del_messages(self, name):
@@ -118,6 +131,15 @@ class ClientDB:
         # for message in my_messages:
         #     print(message.message)
         return messages
+
+    def stop(self):
+        try:
+            self.session.commit()
+        except:
+            self.session.rollback()
+            self.session.commit()
+        finally:
+            self.session.close()
 
     def start(self):
         self.engine = create_engine('sqlite:///{}.sqlite'.format(self.user_name))
