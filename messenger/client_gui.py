@@ -63,12 +63,19 @@ class Client:
         self.main_window.ui.listView_3.clicked.connect(self.select_chat)
 
 
+    def send(self, some_jim):
+        if some_jim.is_empty():
+            pass
+        else:
+            self.sckt.send(some_jim.packing())
+
     def button_invite(self):
         self.listik.hide()
         contact = self.listik.ui.listView_2.selectedIndexes()[0]
         self.contact_for_invite = self.contact_model.data(contact)
-        self.sckt.send(JIMInviteChat(self.user_name, self.contact_for_invite,
-                                     self.chat_name).packing())
+        msg = JIMInviteChat(self.user_name, self.contact_for_invite,
+                                     self.chat_name)
+        self.send(msg)
 
 
 
@@ -99,7 +106,7 @@ class Client:
         self.contact = self.contact_model.data(contact)
         print(self.contact)
         msg = JIMDelContact(self.user_name, self.contact)
-        self.sckt.send(msg.packing())
+        self.send(msg)
         resp = self.deleted_queue.get()
         if resp == "DELETED":
             self.db.del_messages(self.contact)
@@ -126,20 +133,20 @@ class Client:
         if dialog == 16384:
             print('Yes')
             msg = JIMResponse(INVITED, room)
-            self.sckt.send(msg.packing())
+            self.send(msg)
             icon = 'chat.png'
             chat_item = QtGui.QStandardItem(QtGui.QIcon(icon), '*')
             chat_item.setData(room, role=33)
             self.chat_model.appendRow(chat_item)
             self.db.add_contact(room, room)
-            self.sckt.send(JIMGetUsers(self.user_name, room).packing())
+            self.send(JIMGetUsers(self.user_name, room))
         elif dialog == 65536:
             print('No')
 
     def add_contact(self):
         contact = self.main_window.ui.lineEdit_2.text()
-        msg = JIMAddContact(self.user_name, contact).packing()
-        self.sckt.send(msg)
+        msg = JIMAddContact(self.user_name, contact)
+        self.send(msg)
         print('before resp')
         resp = self.added_queue.get()
         print('after resp')
@@ -198,8 +205,8 @@ class Client:
         # pass
 
     def get_contacts(self):
-        msg = JIMGetContacts(self.user_name).packing()
-        self.sckt.send(msg)
+        msg = JIMGetContacts(self.user_name)
+        self.send(msg)
         msg = self.sckt.recv(MESSAGE_SIZE)
         msg = JIM.unpacking(msg)
         if msg.code == ACCEPTED:
@@ -218,7 +225,7 @@ class Client:
         row = contact.row()
         self.contact = self.contact_model.data(contact)
         msg = JIMCreateChat(self.user_name)
-        self.sckt.send(msg.packing())
+        self.send(msg)
         resp = self.created_queue.get()
         if resp == 'CREATED':
             chat_name = self.created_queue.get()
@@ -230,7 +237,7 @@ class Client:
             self.db.add_contact(chat_name, chat_name)
             print(2)
             self.chat_model.appendRow(chat_item)
-            self.sckt.send(JIMInviteChat(self.user_name, self.contact, chat_name).packing())
+            self.send(JIMInviteChat(self.user_name, self.contact, chat_name))
 
     def add_chat(self, room, user):
         print('add_chat user: ' + str(user))
@@ -262,8 +269,8 @@ class Client:
         # chat.appendRow(item)
 
     def join_chat(self, room):
-        msg = JIMJoinChat(self.user_name, room).packing()
-        self.sckt.send(msg)
+        msg = JIMJoinChat(self.user_name, room)
+        self.send(msg)
 
     def get_all_items(self, model):
         count = 0
@@ -284,7 +291,7 @@ class Client:
     def send_message(self):
         message = self.main_window.ui.lineEdit.text()
         msg = JIMMessage(self.user_name, self.contact, message)
-        self.sckt.send(msg.packing())
+        self.send(msg)
         resp = self.sended_queue.get()
         if resp == 'SENDED':
             self.add_message(msg.receiver, msg.message, msg.time, False)
@@ -357,8 +364,8 @@ class Client:
 
 
     def send_presence(self, user_name):
-        msg = JIMPresence(user_name).packing()
-        self.sckt.send(msg)
+        msg = JIMPresence(user_name)
+        self.send(msg)
 
     def dialog_ok(self):
         self.user_name = self.dialog.ui.lineEdit.text()

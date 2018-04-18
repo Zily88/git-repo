@@ -41,6 +41,11 @@ class JIM:
                 'time': self.time
             }
 
+    def is_empty(self):
+        for string in self.msg.values():
+            if not string:
+                return True
+
     def packing(self):
         msg = json.dumps(self.msg)
         msg = msg.encode(ENCODING)
