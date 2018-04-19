@@ -23,6 +23,7 @@ MESSAGE_SIZE = 1024
 DELETED = 205
 INVITED = 206
 ACCEPT = 207
+NOT_CREATED = 411
 
 class JIM:
     def __init__(self, action, user_name=None):

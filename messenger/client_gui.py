@@ -1,5 +1,5 @@
 from socket import socket, AF_INET, SOCK_STREAM
-from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMLeaveChat, JIMJoinChat, CREATED, JIMGetContacts, ACCEPTED, JIMContactList, JIMRespect, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT
+from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMLeaveChat, JIMJoinChat, CREATED, JIMGetContacts, ACCEPTED, JIMContactList, JIMRespect, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED
 from threading import Thread
 from queue import Queue
 from client_db import ClientDB
@@ -221,23 +221,33 @@ class Client:
     #     self.db.get_contacts()
 
     def create_chat(self):
-        contact = self.main_window.ui.listView_2.selectedIndexes()[0]
-        row = contact.row()
-        self.contact = self.contact_model.data(contact)
-        msg = JIMCreateChat(self.user_name)
-        self.send(msg)
-        resp = self.created_queue.get()
-        if resp == 'CREATED':
-            chat_name = self.created_queue.get()
-            print('create_chat: chat_name: {}'.format(chat_name))
-            icon = 'chat.png'
-            chat_item = QtGui.QStandardItem(QtGui.QIcon(icon), '*')
-            chat_item.setData(chat_name, role=33)
-            print(1)
-            self.db.add_contact(chat_name, chat_name)
-            print(2)
-            self.chat_model.appendRow(chat_item)
-            self.send(JIMInviteChat(self.user_name, self.contact, chat_name))
+        try:
+            print('дооооо')
+            contact = self.main_window.ui.listView_2.selectedIndexes()[0]
+            # row = contact.row()
+        except:
+            print('exeption')
+            pass
+        else:
+            self.contact = self.contact_model.data(contact)
+            msg = JIMCreateChat(self.user_name)
+            self.send(msg)
+            resp = self.created_queue.get()
+            if resp == 'CREATED':
+                chat_name = self.created_queue.get()
+                print('create_chat: chat_name: {}'.format(chat_name))
+                icon = 'chat.png'
+                chat_item = QtGui.QStandardItem(QtGui.QIcon(icon), '*')
+                chat_item.setData(chat_name, role=33)
+                print(1)
+                self.db.add_contact(chat_name, chat_name)
+                print(2)
+                self.chat_model.appendRow(chat_item)
+                self.send(JIMInviteChat(self.user_name, self.contact, chat_name))
+            elif resp == 'NOPE!':
+                print('не создаём')
+                pass
+
 
     def add_chat(self, room, user):
         print('add_chat user: ' + str(user))
@@ -510,6 +520,7 @@ class Receive(QtCore.QThread):
         while True:
             msg = self.client.sckt.recv(MESSAGE_SIZE)
             msg = JIM.unpacking(msg)
+            print(msg.code)
             self.mysignal_recv.emit(msg)
             # self.client.show(msg)
             self.client.queue.put(msg)
@@ -612,8 +623,12 @@ class Processing(QtCore.QThread):
                 elif response.code == CONFLICT:
                     self.client.queue.put(JIMResponse(OK))
                 elif response.code == CREATED:
+                    print('code = created')
+                    print(response.code)
                     self.client.created_queue.put('CREATED')
                     self.client.created_queue.put(response.message)
+                elif response.code == NOT_CREATED:
+                    self.client.created_queue.put('NOPE!')
                 elif response.code == ACCEPT:
                     for _ in range(response.quantity):
                         print('первый пошёл')
