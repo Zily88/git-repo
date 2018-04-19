@@ -22,6 +22,10 @@ class Chat():
         if user in self.users:
             return True
 
+    def only_one(self):
+        if len(self.users) == 1:
+            return True
+
     def get_users_list(self):
         user_list = []
         for user in self.users:

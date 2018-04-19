@@ -1,5 +1,5 @@
 from socket import socket, AF_INET, SOCK_STREAM
-from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMJoinChat, JIMLeaveChat, CREATED, JIMGetContacts, JIMContactList, JIMRespect, ACCEPTED, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED
+from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMJoinChat, JIMLeaveChat, CREATED, JIMGetContacts, JIMContactList, JIMRespect, ACCEPTED, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED, DELETE_CHAT
 from server_db import ServerDB
 from select import select
 import sys
@@ -397,6 +397,9 @@ class Server:
                                 print('not_created')
                                 sender = self.get_user(msg.user_name)
                                 sender.add_msg(JIMResponse(NOT_CREATED, 'пользователь оффлайн, чат не создаём!!!'))
+                                chat = self.get_chat(msg.room)
+                                if chat.only_one():
+                                    sender.add_msg(JIMResponse(DELETE_CHAT, chat.name))
 
                         elif isinstance(msg, JIMLeaveChat):
                             user = self.get_user(msg.user_name)

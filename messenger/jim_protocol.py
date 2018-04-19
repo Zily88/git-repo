@@ -24,6 +24,7 @@ DELETED = 205
 INVITED = 206
 ACCEPT = 207
 NOT_CREATED = 411
+DELETE_CHAT = 412
 
 class JIM:
     def __init__(self, action, user_name=None):
