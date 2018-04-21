@@ -1,5 +1,5 @@
 from socket import socket, AF_INET, SOCK_STREAM
-from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMLeaveChat, JIMJoinChat, CREATED, JIMGetContacts, ACCEPTED, JIMContactList, JIMRespect, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED
+from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMLeaveChat, JIMJoinChat, CREATED, JIMGetContacts, ACCEPTED, JIMContactList, JIMRespect, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED, DELETE_CHAT, DELETED_CHAT
 from threading import Thread
 from queue import Queue
 from client_db import ClientDB
@@ -61,6 +61,7 @@ class Client:
         self.chat_name = None
         self.processing.mysignal_users.connect(self.add_chat)
         self.main_window.ui.listView_3.clicked.connect(self.select_chat)
+        self.processing.mysignal_delete_chat.connect(self.delete_chat)
 
 
     def send(self, some_jim):
@@ -216,6 +217,20 @@ class Client:
                 self.db.add_contact(msg.user_name, msg.user_nickname, msg.user_id)
         else:
             self.show(msg)
+
+    def delete_chat(self, room):
+        print('DELETE CHAT')
+        self.db.del_messages(room)
+        self.db.del_contact(room)
+        # need remove row()
+        chats = self.get_all_items(self.chat_model)
+        my_chat = None
+        for chat in chats:
+            if chat.data(33) == room:
+                my_chat = chat
+                break
+        self.chat_model.removeRow(chat.row())
+        self.send(JIMResponse(DELETED_CHAT, room))
 
     # def get_cont_db(self):
     #     self.db.get_contacts()
@@ -497,7 +512,7 @@ class Client:
     def show(self, some_data):
         if isinstance(some_data, JIMResponse):
             if some_data.message and some_data.code != CREATED and some_data.code != INVITED\
-                    and some_data.code != ACCEPT:
+                    and some_data.code != ACCEPT and some_data.code != DELETE_CHAT:
                 # print(some_data.message)
                 QtWidgets.QMessageBox.information(self.main_window,
                                                   'СКУРЕ', '{}'.format(some_data.message))
@@ -529,6 +544,7 @@ class Processing(QtCore.QThread):
     mysignal_invite = QtCore.pyqtSignal(str, str)
     mysignal_message = QtCore.pyqtSignal(str, str,str, int, bool)
     mysignal_users = QtCore.pyqtSignal(str, int)
+    mysignal_delete_chat = QtCore.pyqtSignal(str)
     def __init__(self, client, parent=None):
         QtCore.QThread.__init__(self, parent)
         self.client = client
@@ -635,6 +651,10 @@ class Processing(QtCore.QThread):
                         msg = self.client.queue.get()
                         print(msg.message, msg.quantity)
                         self.mysignal_users.emit(msg.message, msg.quantity)
+                elif response.code == DELETE_CHAT:
+                    # print('response.code == delete chat')
+                    # print(response.message)
+                    self.mysignal_delete_chat.emit(response.message)
 
 
             elif isinstance(response, JIMMessage):

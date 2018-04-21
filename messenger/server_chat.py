@@ -26,6 +26,9 @@ class Chat():
         if len(self.users) == 1:
             return True
 
+    def remove_all_users(self):
+        self.users.clear()
+
     def get_users_list(self):
         user_list = []
         for user in self.users:

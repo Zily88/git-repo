@@ -88,10 +88,7 @@ class Client:
     def leave_chat(self):
         pass
 
-    def delete_chat(self, room):
-        self.db.del_messages(room)
-        self.db.del_contact(room)
-        need remove row()
+
 
     def invite_chat(self):
         chat = self.main_window.ui.listView_3.selectedIndexes()[0]

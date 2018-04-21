@@ -1,5 +1,5 @@
 from socket import socket, AF_INET, SOCK_STREAM
-from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMJoinChat, JIMLeaveChat, CREATED, JIMGetContacts, JIMContactList, JIMRespect, ACCEPTED, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED, DELETE_CHAT
+from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMJoinChat, JIMLeaveChat, CREATED, JIMGetContacts, JIMContactList, JIMRespect, ACCEPTED, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT, NOT_CREATED, DELETE_CHAT, DELETED_CHAT
 from server_db import ServerDB
 from select import select
 import sys
@@ -348,6 +348,9 @@ class Server:
                                 new_msg = JIMResponse(INVITED, chat.name, id)
                                 chat.add_message(new_msg)
                                 chat.done(user)
+                            elif msg.code == DELETED_CHAT:
+                                chat = self.get_chat(msg.message)
+                                chat.remove_all_users()
 
                         elif isinstance(msg, JIMCreateChat):
                             sender = self.get_user(msg.user_name)
