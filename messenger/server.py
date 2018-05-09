@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from socket import socket, AF_INET, SOCK_STREAM
 from jim_protocol import JIM, JIMPresence, JIMMessage, JIMResponse, OK, JIMAddContact, JIMDelContact, WRONG_REQUEST, FORBIDDEN, GONE, NOT_FOUND, CONFLICT, JIMCreateChat, JIMJoinChat, JIMLeaveChat, CREATED, JIMGetContacts, JIMContactList, JIMRespect, ACCEPTED, ADDED, MESSAGE_SIZE, SENDED, NOT_ADDED, NOT_SENDED, DELETED, JIMInviteChat, INVITED, JIMGetUsers, ACCEPT
 from server_db import ServerDB
@@ -7,6 +9,7 @@ from server_chat import Chat
 from user import User
 from queue import Queue
 from threading import Thread
+
 
 PORT = 7777
 HOST = ''
